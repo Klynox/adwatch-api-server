@@ -19,3 +19,18 @@ class MailBot():
         except Exception as e:
             print(e)
             return False
+    
+    def sendPasswordRecovery(self, email, token):
+       message = render_to_string('user-pw.html', {'token': token})
+       subject = 'Adwatch Password Recovery'
+       mail_subject = subject
+       to_email = email
+       raw_message = strip_tags(message)
+       from_email = 'Adwatch <noreply@adwatch.ai>'
+       try:
+           mail.send_mail(mail_subject, raw_message, from_email, [to_email], html_message=message)
+           print('sent')
+           return True
+       except Exception as e:
+           print(e)
+           return False

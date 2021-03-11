@@ -1,6 +1,8 @@
 from django.db import models
 from django.contrib.auth.models import (AbstractBaseUser, PermissionsMixin, BaseUserManager)
 from rest_framework_simplejwt.tokens import RefreshToken
+
+
 class UserManager(BaseUserManager):
     def create_user(self, email, password=None, **kwargs):
         if email is None:
@@ -29,6 +31,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     tokens = models.CharField(max_length=2000, null=True, blank=True, db_index=True)
     usertype = models.IntegerField(default=0)# account owner = 2, normal guys=1
     plan = models.CharField(max_length=200, null=True, blank=True)
+    image = models.ImageField(upload_to='profile', null=True, blank=True)
     is_staff = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
     complete = models.BooleanField(default=False)
@@ -50,3 +53,18 @@ class User(AbstractBaseUser, PermissionsMixin):
             'refresh':str(refresh),
             'access':str(refresh.access_token)
         }
+
+class PasswordRecovery(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
+    token =  models.CharField(max_length=200, null=True, blank=True)
+    created = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+    used = models.BooleanField(default=False)
+
+    class Meta:
+        verbose_name_plural = 'Password Recovery'
+
+    def __str__(self):
+        return self.user.fullname
+
+class Default(models.Model):
+    image = models.ImageField(upload_to="profile", default='upload/person.png', null=True, blank=True)

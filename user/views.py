@@ -13,6 +13,8 @@ from django.contrib.sites.shortcuts import get_current_site
 from django.shortcuts import redirect
 import jwt
 from django.conf import settings
+from django.utils import timezone
+from datetime import timedelta
 
 class RegisterView(APIView):
     serializer_class = RegisterSerializer
@@ -80,3 +82,61 @@ class ViewProfile(APIView):
         user = request.user
         serializer = self.serializer_class(user)
         return Response(data={'status':'success', 'content':serializer.data, 'message':'success'})
+    
+    def post(self, request):
+        user =  request.user
+        remove = request.data.get('remove')
+        serializer = self.serializer_class(user, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        if remove:
+            default = get_object_or_404(Default)
+            user.image = default.image
+            user.save()
+        return Response(data={'status':'success', 'message':'Profile updated successfully'})
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def sendRecoveryToken(request):
+    data = request.data
+    email = data.get('email')
+
+    if email:
+        try:
+            user = User.objects.get(email__iexact=email)
+        except User.DoesNotExist:
+            return Response(status=status.HTTP_200_OK, data={'status': 'error', 'message': "User with this email does not exist"})
+        token = TokenGen().passwordRecoveryToken()
+        response = MailBot().sendPasswordRecovery(email, token)
+        if not response:
+            return Response(status=status.HTTP_200_OK, data={'status': 'error', 'message': "Email could not be sent at this time, try again later"})
+        PasswordRecovery.objects.create(user=user, token=token)
+        return Response(status=status.HTTP_200_OK, data={'status': 'success', 'message': "A recovery token has been sent to your email address"})
+    else:
+        return Response(status=status.HTTP_200_OK, data={'status': 'error', 'message': "Please enter a valid email address"})
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def resetPassword(request):
+    data = request.data
+    token = data.get('token')
+    pw = data.get('pw')
+
+    if not token:
+        return Response(status=status.HTTP_200_OK, data={'status': 'error', 'message': "Input the token sent to your email address"})
+    if len(pw) < 6:
+        return Response(status=status.HTTP_200_OK, data={'status': 'error', 'message': "Password must be at least than 6 digits"})
+    yesterday = timezone.now() - timedelta(days=1)
+    validToken = PasswordRecovery.objects.filter(token=token, used=False, created__gte=yesterday)
+    if not validToken:
+        return Response(status=status.HTTP_200_OK, data={'status': 'error', 'message': "This token is invalid"})
+    validToken = validToken.first()
+    user = validToken.user
+    user.set_password(pw)
+    user.save()
+    user_validTokens = PasswordRecovery.objects.filter(user=user, used=False)
+    for token in user_validTokens:
+        token.used = True
+        token.save()
+    return Response(status=status.HTTP_200_OK, data={'status': 'success', 'message': "Password changed successfully"})
+

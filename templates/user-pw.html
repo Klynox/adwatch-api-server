@@ -1,0 +1,8 @@
+{% autoescape off %}
+    <div style="background-color:white;border:0.1px solid #000321;border-radius:10px 10px 0px 0px;padding:10px 14px;font-size: 15px;">
+        <h2 style="color:#0f2988;text-transform:uppercase;margin-left:5px">Password Recovery</h2>
+        <p>This is your password recovery token </p>
+        <p><b>{{token}}</b> this token expires after 24 hours.</p>
+        <p>If you didn't request for this, please ignore it and your account password won't be altered.</p>
+    </div>
+{% endautoescape %}

@@ -51,3 +51,32 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         exclude = ['group_code', 'password']
+
+    def validate(self, attrs):
+        email = attrs.get('email', None)
+        phone = attrs.get('phone', None)
+        password = attrs.get('password', None)
+        if email:
+            if User.objects.filter(email__iexact=email).exists():
+                raise serializers.ValidationError('User with email  already exists')
+        if phone:
+            if User.objects.filter(phone=phone).exists():
+                raise serializers.ValidationError('User with email  already exists')
+        if password:
+            if len(password) < 6:
+                raise serializers.ValidationError('Password must be at least 6 digits')
+        return attrs
+
+    def update(self, instance, validated_data):
+        if validated_data.get('fullname'):
+            instance.fullname = validated_data.get('fullname')
+        if validated_data.get('email'):        
+            instance.email = validated_data.get('email')
+        if validated_data.get('phone'):
+            instance.phone = validated_data.get('phone')
+        if validated_data.get('image'):
+            instance.image = validated_data.get('image')
+        if validated_data.get('password'):
+            instance.set_password(validated_data.get('password'))
+        instance.save()
+        return instance
