@@ -80,31 +80,4 @@ def joinTeam(request):
 
 
 
-@api_view(['POST'])
-@permission_classes([IsAuthenticated])
-def startPlan(request):
-    data = request.data
-    user = request.user
-    duration = data.get('duration')
-    _type = data.get('type')
-    name = data.get('name')
-    expire = timezone.now() + timedelta(days=30)
-    if duration == '2':
-        expire = timezone.now() + timedelta(days=365)
-    plan = Plan.objects.create(name=name, _type=_type, duration=duration, created_at=timezone.now(), expire_at=expire)
-    user.plan = plan
-    user.usertype = 1
-    if _type == '3':
-        user.usertype = 2
-    user.save()
-    return Response(data={'status':'success', "message":"Success, you can now enjoy adwatch"})
 
-@api_view(['POST'])
-@permission_classes([IsAuthenticated])
-def tryVideo(request):
-    video = request.data.get('video')
-    user = request.user
-    plan = user.plan
-    plan.video = video
-    plan.save()
-    return Response('good')

@@ -7,7 +7,6 @@ class Plan(models.Model):
     created_at = models.DateTimeField(auto_now_add=False)
     expire_at = models.DateTimeField(auto_now_add=False, null=True)
     active = models.BooleanField(default=True)
-    video = models.FileField(upload_to='videos', null=True, blank=True)
 
     def __str__(self):
         return self.name
