@@ -1,7 +1,7 @@
 from django.db import models
+from core.models import Plan
 from django.contrib.auth.models import (AbstractBaseUser, PermissionsMixin, BaseUserManager)
 from rest_framework_simplejwt.tokens import RefreshToken
-
 
 class UserManager(BaseUserManager):
     def create_user(self, email, password=None, **kwargs):
@@ -21,7 +21,7 @@ class UserManager(BaseUserManager):
         user.is_staff = True
         user.save()
         return user
-    
+
 class User(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(max_length=255, null=True, blank=True, unique=True, db_index=True)
     firstname = models.CharField(max_length=255, null=True, blank=True,  db_index=True)
@@ -29,8 +29,9 @@ class User(AbstractBaseUser, PermissionsMixin):
     fullname = models.CharField(max_length=255, null=True, blank=True,  db_index=True)
     phone = models.CharField(max_length=20, null=True, blank=True, unique=True, db_index=True)
     tokens = models.CharField(max_length=2000, null=True, blank=True, db_index=True)
-    usertype = models.IntegerField(default=0)# account owner = 2, normal guys=1
-    plan = models.CharField(max_length=200, null=True, blank=True)
+    usertype = models.IntegerField(default=0)# account owner = 2, normal guys=1, no plan = 0
+
+    plan = models.ForeignKey(Plan, null=True, blank=True, on_delete=models.CASCADE)# projects are tied to this plan
     image = models.ImageField(upload_to='profile', null=True, blank=True)
     is_staff = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
@@ -46,7 +47,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return f"{self.fullname}"
-    
+
     def getTokens(self):
         refresh = RefreshToken.for_user(self)
         return {
@@ -68,3 +69,5 @@ class PasswordRecovery(models.Model):
 
 class Default(models.Model):
     image = models.ImageField(upload_to="profile", default='upload/person.png', null=True, blank=True)
+
+

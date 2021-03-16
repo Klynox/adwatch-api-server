@@ -18,10 +18,14 @@ from django.urls import path, include
 from user.views import activateAccount
 from django.conf import settings
 from django.conf.urls.static import static
+from rest_framework_simplejwt import views as jwt_views
 
 urlpatterns = [
+    path('api/token/', jwt_views.TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/token/refresh/', jwt_views.TokenRefreshView.as_view(), name='token_refresh'),
     path('admin/', admin.site.urls),
     path('user/api/', include('user.urls')),
+    path('core/api/', include('core.urls')),
     path('complete/<str:token>', activateAccount)
 ]
 if settings.DEBUG:
@@ -29,4 +33,4 @@ if settings.DEBUG:
 
 admin.site.site_header = 'i-wizard administration'
 admin.site.site_title = 'i-wizard Admin Portal'
-admin.site.index_title = 'Welcome to Paydemy super-admin portal'
+admin.site.index_title = 'Welcome to Adwatch super-admin portal'

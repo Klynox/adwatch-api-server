@@ -15,6 +15,7 @@ import jwt
 from django.conf import settings
 from django.utils import timezone
 from datetime import timedelta
+from core.models import *
 
 class RegisterView(APIView):
     serializer_class = RegisterSerializer
@@ -57,6 +58,8 @@ def resendActivationMail(request):
 def activateAccount(request, token):
     payload = jwt.decode(token, settings.SECRET_KEY)
     user = User.objects.get(id=payload['id'])
+    default = get_object_or_404(Default)
+    user.image = default.image
     user.complete = True
     user.save()
     return redirect('http://dashboard.adwatch.ai')
@@ -67,6 +70,7 @@ class LoginView(APIView):
     serializer_class = LoginSerializer
     permission_classes = (AllowAny,)
     def post(self, request):
+
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
         user_id = serializer.data['id']
@@ -82,7 +86,7 @@ class ViewProfile(APIView):
         user = request.user
         serializer = self.serializer_class(user)
         return Response(data={'status':'success', 'content':serializer.data, 'message':'success'})
-    
+
     def post(self, request):
         user =  request.user
         remove = request.data.get('remove')
@@ -132,7 +136,7 @@ def resetPassword(request):
         return Response(status=status.HTTP_200_OK, data={'status': 'error', 'message': "This token is invalid"})
     validToken = validToken.first()
     user = validToken.user
-    user.set_password(pw)
+    user.set_password(pw.lower())
     user.save()
     user_validTokens = PasswordRecovery.objects.filter(user=user, used=False)
     for token in user_validTokens:
